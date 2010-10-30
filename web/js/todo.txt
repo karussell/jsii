@@ -1,5 +1,6 @@
-check again score
-get all docs via *
+
+npm install jsii
+
 feed tweets
 
 query time boosting, boost different fields different

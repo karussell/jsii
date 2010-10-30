@@ -1,1 +1,22 @@
 Full Text Search Prototype in 100% JavaScript
+
+
+Source
+======
+
+NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
+Sources of jsii stand under Apache 2 license. see web/js
+
+External libs
+    json2 - Public Domain
+    jasmine - MIT LICENSE
+    BitSet from GWT - Apache 2 License
+
+Get Started
+===========
+
+At the moment feeding is possible only via API (engine.feedDocs) see Server.js
+
+start server via 'node Server.js'
+
+query via http://127.0.0.1:8124/select?q=blup

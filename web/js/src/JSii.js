@@ -9,7 +9,7 @@
  */
 JSii = function () {
     // inverted index ala [{"test": bitSet1}, {"pest": bitSet2}]
-    this.iindex = [];
+    this.iindex = {};
 
     // in-memory document array ala [{id: 1, text: "test"}, {id: 2, text: "pest"}]
     this.docs = [];
@@ -19,7 +19,9 @@ JSii = function () {
     // text   = whitespace tokenization + lowercase
     this.fields = {
         id : 'string',
-        text : 'text'
+        text : 'text',
+        tw : 'text',
+        user : 'string'
     };
 
     // TODO
@@ -84,6 +86,12 @@ JSii.prototype.feedDocs = function(newdocs) {
 //  score_d(d, q)=  --------------------------------- (**)
 //                           norm_d * norm_q
 
+/**
+ * @return an object ala
+ * { total : totalDocs,
+ *   docs: [doc1, doc2]
+ * }
+ */
 JSii.prototype.search = function(query, start, rows) {
     if(start === undefined)
         start = 0;
@@ -94,44 +102,50 @@ JSii.prototype.search = function(query, start, rows) {
         throw "Start should be >=0";
     if(rows <= 0)
         throw "Rows should be >0";
-    
-    // create bitset of terms and perform 'AND'
-    var terms = this.textTokenizer(query);
-    if(terms.length == 0)
-        return this.createEmptyResult();
 
-    // TODO filter e.g. date:[NOW-8HOUR TO *]
-    // create a filter cache. keys als "date:[mySpecialFilter]" values ala DocBitSet (docs that fullfill the query)
-    // -> range query
+    var resDocs = [];
+    if(query == "*") {
+        resDocs = this.docs;
+    } else {
     
-    var resBs;
-    for(var i = 0, j = terms.length; i < j; i++) {
-        var bs = this.iindex[terms[i]];
-
-        // AND operator
-        if(bs === undefined)
+        // create bitset of terms and perform 'AND'
+        var terms = this.textTokenizer(query);
+        if(terms.length == 0)
             return this.createEmptyResult();
 
-        if(i == 0)
-            resBs = bs;
-        else
+        // TODO filter e.g. date:[NOW-8HOUR TO *]
+        // create a filter cache. keys als "date:[mySpecialFilter]" values ala DocBitSet (docs that fullfill the query)
+        // -> range query
+    
+        var resBs;
+        for(var i = 0, j = terms.length; i < j; i++) {
+            var bs = this.iindex[terms[i]];
+
             // AND operator
-            resBs.and(bs);
-    }
+            if(bs === undefined)
+                return this.createEmptyResult();
+
+            if(i == 0)
+                resBs = bs;
+            else
+                // AND operator
+                resBs.and(bs);
+        }
     
-    if(resBs.length() == 0)
-        return this.createEmptyResult();    
+        if(resBs.length() == 0)
+            return this.createEmptyResult();
     
-    // collect the docs from the resulting bitset
-    var resDocs = [];    
-    for(var bsIndex = resBs.nextSetBit(0);
-        bsIndex < resBs.length() && bsIndex != -1;
-        bsIndex = resBs.nextSetBit(bsIndex+1)) {
+        // collect the docs from the resulting bitset
+        for(var bsIndex = resBs.nextSetBit(0);
+            bsIndex < resBs.length() && bsIndex != -1;
+            bsIndex = resBs.nextSetBit(bsIndex+1)) {
         
-        resDocs.push(this.docs[bsIndex]);
-    }
+            resDocs.push(this.docs[bsIndex]);
+        }
     
-    this.setScore(resDocs, terms);
+        this.setScore(resDocs, terms);
+    }
+
     resDocs.sort(this.sort);
 
     var totalDocs = resDocs.length;
@@ -179,7 +193,7 @@ JSii.prototype.setScore = function(resDocs, terms) {
         }
 
         var queryNorm = 1/Math.sqrt(x);
-        doc.score = queryNorm * sum;
+        resDocs[doc].score = queryNorm * sum;
     }
 }
 

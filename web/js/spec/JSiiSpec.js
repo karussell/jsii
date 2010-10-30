@@ -89,4 +89,44 @@ describe("JSii", function() {
             expect(res[1]).toBe('3');
         });
     });
+
+    it("get all docs via * and paging", function() {
+        var jsii = new JSii();
+        jsii.feedDocs([{
+            id : 1,
+            text : "test blap"
+        },{
+            id : 2,
+            text : "test blap blup"
+        }]);
+
+        var res = jsii.search("*");
+        expect(res.total).toBe(2);
+
+        res = jsii.search("*", 1, 2);
+        expect(res.total).toBe(2);
+        expect(res.docs.length).toBe(1);
+    });
+
+    it("should do a phrase search with correct score", function() {
+        var jsii = new JSii();
+        jsii.feedDocs([{
+            id : 1,
+            text : "test blap"
+        },{
+            id : 2,
+            text : "test blap blup"
+        }]);
+
+        var res = jsii.search("test blap");
+        expect(res.total).toBe(2);
+        var score1 = res.docs[0].score;
+        var score2 = res.docs[1].score;
+        expect(score1).toBeGreaterThan(0.5);
+
+        res = jsii.search("blup test");
+        expect(res.total).toBe(1);        
+        expect(score1).toBeGreaterThan(res.docs[0].score);
+    });
+
 });
