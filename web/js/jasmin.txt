@@ -1,0 +1,4 @@
+expect(player).not.toBePlaying(song);
+expect(player.currentlyPlayingSong).toEqual(song);
+expect(function() {player.resume();}).toThrow("song is already playing");
+spyOn(song, 'persistFavoriteStatus');

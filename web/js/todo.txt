@@ -1,0 +1,8 @@
+check again score
+get all docs via *
+feed tweets
+
+query time boosting, boost different fields different
+support different fields via key === field:"value"
+support stored (literally) + indexed (inverted index)
+support sort=field asc/desc   (int, date->long)
