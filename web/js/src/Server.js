@@ -15,6 +15,7 @@ require("./Solr");
 
 // feed docs from solr into our index
 var engine = new JSii();
+engine.defaultSearchField = 'tw';
 fs.open("src/pw.txt", "r", 0666, function(err, fd){
     if (err) throw err;
     fs.read(fd, 10000, null, 'utf8', function(err,str,count) {
@@ -102,7 +103,12 @@ function query(request, response) {
         var time = new Date().getTime() - start;
         response.write('{"responseHeader": {"status":0, "QTime": '+time);
         response.write(',"params": ' + JSON.stringify(params));
-        
+
+        // jsii 'extension'
+        response.write(',"jsii": ' + JSON.stringify({
+            date: new Date()
+        }));
+
         response.write('},\n"response":{"numFound":'+result.docs.length+', "start":' + params.start + ',\n');
         response.write('"docs":[');
 

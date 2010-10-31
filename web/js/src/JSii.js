@@ -116,6 +116,9 @@ JSii.prototype.search = function(query, start, rows) {
         var allTerms = [];
         for(var ii = 0; ii < elements.length; ii++) {
             var fieldSpecificIndex = this.iindex[elements[ii].field];
+            if(fieldSpecificIndex === undefined)
+                return this.createEmptyResult();
+            
             // create bitset of terms and perform 'AND'
             var terms = this.textTokenizer(elements[ii].terms);
             if(terms.length == 0)
