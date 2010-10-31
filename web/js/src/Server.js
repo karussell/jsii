@@ -46,8 +46,8 @@ fs.open("src/pw.txt", "r", 0666, function(err, fd){
         
         var options = {};
         options.rows = 1000;
-        options.fq = "lang:en";
-        for(var i = 0; i < 10000; i+=options.rows) {
+        //options.fq = "lang:en";
+        for(var i = 0; i < 100000; i+=options.rows) {
             options.start = i;
             client.query(queryStr, options, callback);
         }
@@ -92,13 +92,15 @@ function query(request, response) {
     });
 
     var params = url.parse(request.url, true).query;
-    if(params == undefined || params.q == undefined)
-        response.write('{info: "No q specified"}');
-    else {
+    if(params == undefined || params.q == undefined) {
+        var err =  "No param q specified";
+        response.write('{"responseHeader": {"status": 1, "QTime": 0, "error": "'+err+'"}, "response":{"numFound":0}}');
+    } else {
         if(params.start == undefined)
             params.start = 0;
         var start = new Date().getTime();
-        var result = engine.search(params.q, params.start, params.rows);
+        var sortMethod = engine.createSortMethod(params.sort);
+        var result = engine.search(params.q, params.start, params.rows, sortMethod);
         console.log('RAM:' + process.memoryUsage().heapUsed / 1024 / 1024 + ' MB');
         var time = new Date().getTime() - start;
         response.write('{"responseHeader": {"status":0, "QTime": '+time);
@@ -127,6 +129,7 @@ function show404(req, res) {
     res.writeHead(404, {
         'Content-Type': 'text/plain'
     });
-    res.write('Use select?q=query to query the in-memory index or use update/ to feed it!');
+    var err = "Use select?q=query to query the in-memory index or use update/ to feed it!";
+    res.write('{"responseHeader": {"status": 1, "QTime": 0, "error": "'+err+'"}, "response":{"numFound":0}}');
     res.end();
 }

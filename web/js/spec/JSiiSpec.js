@@ -7,12 +7,12 @@ describe("JSii", function() {
     it("should do simple search", function() {        
         var jsii = new JSii();        
         jsii.feedDocs([{
-                id : 1,
-                text : "blup"
-            },{
-                id : 2,
-                text : "blup blap"
-            }]);
+            id : 1,
+            text : "blup"
+        },{
+            id : 2,
+            text : "blup blap"
+        }]);
 
         var resp = jsii.search('blup');
         expect(resp.total).toBe(2);
@@ -38,18 +38,18 @@ describe("JSii", function() {
     it("should do pagination", function() {
         var jsii = new JSii();
         jsii.feedDocs([{
-                id : 1,
-                text : "blup"
-            },{
-                id : 2,
-                text : "blup blap"
-            },{
-                id : 3,
-                text : "blup blap three"
-            },{
-                id : 4,
-                text : "blup blap five"
-            }]);
+            id : 1,
+            text : "blup"
+        },{
+            id : 2,
+            text : "blup blap"
+        },{
+            id : 3,
+            text : "blup blap three"
+        },{
+            id : 4,
+            text : "blup blap five"
+        }]);
         
         var resp = jsii.search('blup', 0, 2);
         expect(resp.total).toBe(4);
@@ -93,12 +93,12 @@ describe("JSii", function() {
     it("get all docs via * and paging", function() {
         var jsii = new JSii();
         jsii.feedDocs([{
-                id : 1,
-                text : "test blap"
-            },{
-                id : 2,
-                text : "test blap blup"
-            }]);
+            id : 1,
+            text : "test blap"
+        },{
+            id : 2,
+            text : "test blap blup"
+        }]);
 
         var res = jsii.search("*");
         expect(res.total).toBe(2);
@@ -111,12 +111,12 @@ describe("JSii", function() {
     it("should do a search with correct score", function() {
         var jsii = new JSii();
         jsii.feedDocs([{
-                id : 1,
-                text : "test blap"
-            },{
-                id : 2,
-                text : "test blap blup"
-            }]);
+            id : 1,
+            text : "test blap"
+        },{
+            id : 2,
+            text : "test blap blup"
+        }]);
 
         var res = jsii.search("test blap");
         expect(res.total).toBe(2);
@@ -131,14 +131,14 @@ describe("JSii", function() {
     it("should do filter query", function() {
         var jsii = new JSii();
         jsii.feedDocs([{
-                id : 1,
-                user : "a",
-                text : "b"
-            },{
-                id : 2,
-                user : "b",
-                text : "a"
-            }]);
+            id : 1,
+            user : "a",
+            text : "b"
+        },{
+            id : 2,
+            user : "b",
+            text : "a"
+        }]);
 
         var res = jsii.search("user:b");
         expect(res.total).toBe(1);
@@ -148,16 +148,16 @@ describe("JSii", function() {
     it("should weight terms via boost", function() {
         var jsii = new JSii();
         jsii.feedDocs([{
-                id : 1,
-                user : "a",
-                text : "b"
-            },{
-                id : 2,
-                user : "b",
-                text : "a"
-            }]);
+            id : 1,
+            user : "a",
+            text : "b"
+        },{
+            id : 2,
+            user : "b",
+            text : "a"
+        }]);
 
-        //TODO
+    //TODO
     });
 
     it("should do query parsing", function() {
@@ -193,5 +193,28 @@ describe("JSii", function() {
     it("should do simple query with no docs feeded", function() {
         var jsii = new JSii();        
         jsii.search("hello");
+    });
+
+    it("should create correct sort method", function() {
+        var jsii = new JSii();        
+        
+        var array = [{
+            id: 1
+        }, {
+            id: 6
+        }, {
+            id:0
+        }, {
+            id:7
+        }];
+        var res = array.sort(jsii.createSortMethod("id asc"));
+        expect(res[0].id).toBe(0);
+        expect(res[1].id).toBe(1);
+        expect(res[2].id).toBe(6);
+
+        res = array.sort(jsii.createSortMethod("id desc"));
+        expect(res[0].id).toBe(7);
+        expect(res[1].id).toBe(6);
+        expect(res[2].id).toBe(1);
     });
 });

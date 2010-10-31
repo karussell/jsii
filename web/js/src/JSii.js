@@ -94,7 +94,10 @@ JSii.prototype.feedDocs = function(newdocs) {
  *   docs: [doc1, doc2]
  * }
  */
-JSii.prototype.search = function(query, start, rows) {
+JSii.prototype.search = function(query, start, rows, sortFunction) {
+    if(sortFunction == undefined)
+        sortFunction = this.sort;
+    
     if(start === undefined)
         start = 0;
     if(rows == undefined)
@@ -158,7 +161,7 @@ JSii.prototype.search = function(query, start, rows) {
         this.setScore(resDocs, allTerms);
     }
 
-    resDocs.sort(this.sort);
+    resDocs.sort(sortFunction);
     var totalDocs = resDocs.length;
     // for pagination
     var end = Math.min(start + rows, totalDocs);
@@ -207,6 +210,36 @@ JSii.prototype.sort = function(doc1, doc2) {
         return -1;
     return 0;
 };
+
+JSii.prototype.createSortMethod = function(sortString) {
+    if(sortString == undefined)
+        return this.sort;
+
+    var field = sortString.split(' ')[0];
+    var asc_desc= sortString.split(' ')[1];
+
+    if(asc_desc == "asc") {
+        return function(doc1, doc2) {
+            var v1 = doc1[field];
+            var v2 = doc2[field];
+            if(v1 > v2)
+                return 1;
+            else if(v1 < v2)
+                return -1;
+            return 0;
+        };
+    } else {
+        return function(doc1, doc2) {
+            var v1 = doc1[field];
+            var v2 = doc2[field];
+            if(v1 > v2)
+                return -1;
+            else if(v1 < v2)
+                return 1;
+            return 0;
+        };
+    }
+}
 
 JSii.prototype.createEmptyResult = function() {
     return  {

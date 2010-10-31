@@ -1,4 +1,4 @@
-sort against date
+sort against id (date)
 
 measure RAM usage + qtime when load testing
 regular refresh via F5 -> only first result differs
