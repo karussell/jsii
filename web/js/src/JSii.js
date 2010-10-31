@@ -25,6 +25,9 @@ JSii = function () {
         user : 'string'
     };
     this.defaultSearchField = 'text';
+
+    // TODO when feeding docs do not add but overwrite existing!
+    this.idField = 'id';
     
     var result = " &-+\\/,;:.!?_~#'=(){}[]<>|%$§\"@";
     this.splitOnChar = {};
@@ -33,7 +36,9 @@ JSii = function () {
     }
 }
 
-
+JSii.prototype.trim = function (str) {
+    return str.replace(/^\s*/, "").replace(/\s*$/, "");
+}
 
 /**
  * In newdocs the documents to be fed are specified. An array of simple property objects:
@@ -109,7 +114,7 @@ JSii.prototype.search = function(query, start, rows, sortFunction) {
         throw "Rows should be >0";
 
     var resDocs = [];
-    if(query == "*") {
+    if(query == "*" || this.trim(query).length == 0) {
         resDocs = this.docs;
     } else {    
         // extract elements from query ala field:"terma termb"^boost ...

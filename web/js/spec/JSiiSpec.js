@@ -100,7 +100,13 @@ describe("JSii", function() {
             text : "test blap blup"
         }]);
 
-        var res = jsii.search("*");
+        var res = jsii.search("");
+        expect(res.total).toBe(2);
+
+        res = jsii.search(" ");
+        expect(res.total).toBe(2);
+
+        res = jsii.search("*");
         expect(res.total).toBe(2);
 
         res = jsii.search("*", 1, 2);
