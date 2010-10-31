@@ -94,12 +94,16 @@ function query(request, response) {
     if(params == undefined || params.q == undefined)
         response.write('{info: "No q specified"}');
     else {
+        if(params.start == undefined)
+            params.start = 0;
         var start = new Date().getTime();
         var result = engine.search(params.q, params.start, params.rows);
-        var time = (new Date().getTime() - start) / 1000.0;
-        response.write('{\ninfo: {numFound:'+result.docs.length+', time: '+time+'}');
-        response.write(',\nparams: ' + JSON.stringify(params));
-        response.write(',\ndocs:[');
+        var time = new Date().getTime() - start;
+        response.write('{"responseHeader": {"status":0, "QTime": '+time);
+        response.write(',"params": ' + JSON.stringify(params));
+        
+        response.write('},\n"response":{"numFound":'+result.docs.length+', "start":' + params.start + ',\n');
+        response.write('"docs":[');
 
         for(var i = 0; i < result.docs.length; i++) {
             if( i > 0)
@@ -107,7 +111,7 @@ function query(request, response) {
             response.write(JSON.stringify(result.docs[i]));
         }
 
-        response.write("]\n}");
+        response.write("\n]}}");
     }
     response.end();
 }
