@@ -7,7 +7,7 @@ var http = require('http');
 //var querystring = require('querystring');
 var url = require('url');
 var fs = require('fs');
-
+var util = require('util');
 require('./JSii');
 require('./BitSet');
 require('./json2');
@@ -98,6 +98,7 @@ function query(request, response) {
             params.start = 0;
         var start = new Date().getTime();
         var result = engine.search(params.q, params.start, params.rows);
+        console.log('RAM:' + process.memoryUsage().heapUsed / 1024 / 1024 + ' MB');
         var time = new Date().getTime() - start;
         response.write('{"responseHeader": {"status":0, "QTime": '+time);
         response.write(',"params": ' + JSON.stringify(params));

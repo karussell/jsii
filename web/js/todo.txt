@@ -1,10 +1,9 @@
-solr compatible json format
-    sadle solr does not have a JSONResponseParser yet: https://issues.apache.org/jira/browse/SOLR-402
-
-fix bug via new query parser + storing a 3 deep nested hash term->field->bitset
-    query time boosts
-measure RAM usage + qtime when load testing
 sort against date
+
+measure RAM usage + qtime when load testing
+regular refresh via F5 -> only first result differs
+range query date:[NOW-8HOUR TO *]
+    create a filter cache. keys als "date:[mySpecialFilter]" values ala DocBitSet (docs that fullfill the query)
 search in AND-results via doc.field.indexOf("x y z") when querying "x y z" (query with "" !)
 npm install jsii
 js twitter clients
@@ -12,3 +11,7 @@ js twitter clients
     http://github.com/jdub/node-twitter
 
 support sort=field asc/desc   (int, date->long)
+
+TODO
+    jetwick integration is difficult because
+    solrj does not have a JSONResponseParser yet: https://issues.apache.org/jira/browse/SOLR-402

@@ -26,7 +26,7 @@ describe("JSii", function() {
         expect(resp.docs[0].id).toBe(2);
 
         // search for an id!
-        resp = jsii.search('1');
+        resp = jsii.search('id:1');
         expect(resp.total).toBe(1);
         expect(resp.docs[0].id).toBe(1);
 
@@ -108,7 +108,7 @@ describe("JSii", function() {
         expect(res.docs.length).toBe(1);
     });
 
-    it("should do a phrase search with correct score", function() {
+    it("should do a search with correct score", function() {
         var jsii = new JSii();
         jsii.feedDocs([{
             id : 1,
@@ -120,13 +120,73 @@ describe("JSii", function() {
 
         var res = jsii.search("test blap");
         expect(res.total).toBe(2);
-        var score1 = res.docs[0].score;
-        var score2 = res.docs[1].score;
+        var score1 = res.docs[0].score;        
         expect(score1).toBeGreaterThan(0.5);
 
         res = jsii.search("blup test");
-        expect(res.total).toBe(1);        
+        expect(res.total).toBe(1);       
         expect(score1).toBeGreaterThan(res.docs[0].score);
     });
 
+    it("should do filter query", function() {
+        var jsii = new JSii();
+        jsii.feedDocs([{
+            id : 1,
+            user : "a",
+            text : "b"
+        },{
+            id : 2,
+            user : "b",
+            text : "a"
+        }]);
+
+        var res = jsii.search("user:b");
+        expect(res.total).toBe(1);
+        expect(res.docs[0].id).toBe(2);
+    });
+
+    it("should weight terms via boost", function() {
+        var jsii = new JSii();
+        jsii.feedDocs([{
+            id : 1,
+            user : "a",
+            text : "b"
+        },{
+            id : 2,
+            user : "b",
+            text : "a"
+        }]);
+
+        //TODO
+    });
+
+    it("should do query parsing", function() {
+        var jsii = new JSii();
+        jsii.defaultSearchField = "tw"
+        var res = jsii.queryParser("hello");
+        expect(res[0].field).toBe('tw');
+        expect(res[0].terms).toBe('hello');
+        expect(res[0].boost).toBe(1);
+
+        res = jsii.queryParser("tmp:test^10");
+        expect(res[0].field).toBe('tmp');
+        expect(res[0].terms).toBe('test');
+        expect(res[0].boost).toBe(10);
+
+        res = jsii.queryParser('tmp:"test it"');
+        expect(res.length).toBe(1);
+        expect(res[0].field).toBe('tmp');        
+        expect(res[0].terms).toBe('test it');
+        expect(res[0].boost).toBe(1);
+
+        res = jsii.queryParser('tmp:"test it" now^2');
+        expect(res.length).toBe(2);
+        expect(res[0].field).toBe('tmp');
+        expect(res[0].terms).toBe('test it');
+        expect(res[0].boost).toBe(1);
+
+        expect(res[1].field).toBe('tw');
+        expect(res[1].terms).toBe('now');
+        expect(res[1].boost).toBe(2);
+    });
 });

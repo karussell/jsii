@@ -8,7 +8,8 @@
  * fast (?), in-memory, simple
  */
 JSii = function () {
-    // inverted index ala [{"test": bitSet1}, {"pest": bitSet2}]
+    // inverted index ala {fieldX: {"test": bitSet1}, {"pest": bitSet2},
+    //                     fieldY: {"test": bitSet3}, ...
     this.iindex = {};
 
     // in-memory document array ala [{id: 1, text: "test"}, {id: 2, text: "pest"}]
@@ -23,16 +24,16 @@ JSii = function () {
         tw : 'text',
         user : 'string'
     };
-
-    // TODO
-    // this.fieldBoost = { id: 1, text: 7.5, ...};
-
+    this.defaultSearchField = 'text';
+    
     var result = " &-+\\/,;:.!?_~#'=(){}[]<>|%$§\"@";
     this.splitOnChar = {};
     for(var ii = 0; ii < result.length; ii++) {
         this.splitOnChar[result.charAt(ii)] = true;
     }
 }
+
+
 
 /**
  * In newdocs the documents to be fed are specified. An array of simple property objects:
@@ -55,20 +56,21 @@ JSii.prototype.feedDocs = function(newdocs) {
             else
                 continue;
 
+            var fieldSpecificIndex = this.iindex[prop];
+            if(fieldSpecificIndex == undefined) {
+                fieldSpecificIndex = {};
+                this.iindex[prop] = fieldSpecificIndex;
+            }
+
             for(var jj = 0; jj < terms.length; jj++) {
-                var bitSet = this.iindex[terms[jj]];
+                var bitSet = fieldSpecificIndex[terms[jj]];
             
                 if(bitSet === undefined) {
                     bitSet = new BitSet();
-                    this.iindex[terms[jj]] = bitSet;
+                    fieldSpecificIndex[terms[jj]] = bitSet;
                 }
                 
                 bitSet.set(docNo);
-
-                // store for which fieldType we created the term to enable boost when searching
-                if(bitSet.fieldTypes === undefined)
-                    bitSet.fieldTypes = {}
-                bitSet.fieldTypes[fieldType] = true;
             }
         }
     }
@@ -106,48 +108,54 @@ JSii.prototype.search = function(query, start, rows) {
     var resDocs = [];
     if(query == "*") {
         resDocs = this.docs;
-    } else {
-    
-        // create bitset of terms and perform 'AND'
-        var terms = this.textTokenizer(query);
-        if(terms.length == 0)
-            return this.createEmptyResult();
-
-        // TODO filter e.g. date:[NOW-8HOUR TO *]
-        // create a filter cache. keys als "date:[mySpecialFilter]" values ala DocBitSet (docs that fullfill the query)
-        // -> range query
-    
+    } else {    
+        // extract elements from query ala field:"terma termb"^boost ...
+        var elements = this.queryParser(query);
         var resBs;
-        for(var i = 0, j = terms.length; i < j; i++) {
-            var bs = this.iindex[terms[i]];
+        // allTerms [ {frequency, boost, term1}, ...]
+        var allTerms = [];
+        for(var ii = 0; ii < elements.length; ii++) {
+            var fieldSpecificIndex = this.iindex[elements[ii].field];
+            // create bitset of terms and perform 'AND'
+            var terms = this.textTokenizer(elements[ii].terms);
+            if(terms.length == 0)
+                return this.createEmptyResult();                       
+            
+            for(var i = 0, j = terms.length; i < j; i++) {
+                var bs = fieldSpecificIndex[terms[i]];
 
-            // AND operator
-            if(bs === undefined)
-                return this.createEmptyResult();
-
-            if(i == 0)
-                resBs = bs;
-            else
                 // AND operator
-                resBs.and(bs);
+                if(bs === undefined)
+                    return this.createEmptyResult();
+
+                if(resBs == undefined)
+                    resBs = bs;
+                else
+                    // AND operator
+                    resBs.and(bs);
+
+                allTerms.push({
+                    frequency: bs.cardinality(),
+                    boost: elements[i].boost,
+                    term: terms[i]
+                });
+            }
+    
+            if(resBs.length() == 0)
+                return this.createEmptyResult();               
         }
-    
-        if(resBs.length() == 0)
-            return this.createEmptyResult();
-    
+        
         // collect the docs from the resulting bitset
         for(var bsIndex = resBs.nextSetBit(0);
             bsIndex < resBs.length() && bsIndex != -1;
             bsIndex = resBs.nextSetBit(bsIndex+1)) {
-        
+
             resDocs.push(this.docs[bsIndex]);
         }
-    
-        this.setScore(resDocs, terms);
+        this.setScore(resDocs, allTerms);
     }
 
     resDocs.sort(this.sort);
-
     var totalDocs = resDocs.length;
     // for pagination
     var end = Math.min(start + rows, totalDocs);
@@ -163,14 +171,11 @@ JSii.prototype.search = function(query, start, rows) {
  * In its end version this should works like:
  * http://lucene.apache.org/java/3_0_2/api/all/org/apache/lucene/search/Similarity.html
  *
- * TODO
- *   field boosts
- *   query time boosts => boost(t) = 1 at the moment
- *
  * Neglected some parts because for searching tweets I don't need it:
  *   lengthNorm is 1
  *   term frequency is 1
  *   coord(q,d) = number of terms of q that are in d = 1 at the moment
+ *   field boost must be handled via query boost
  */
 JSii.prototype.setScore = function(resDocs, terms) {
     var bs;
@@ -181,15 +186,10 @@ JSii.prototype.setScore = function(resDocs, terms) {
         var norm = 1 /* lengthNorm(field(t)) * multiplyForAllFields(boost(field(t))) <- precalculated */;
         for(var k = 0, l = terms.length; k < l; k++) {
             // for tweets we should use var tf = Math.min(4, tf) but tf is expensive to calc so avoid it at all:
-            bs = this.iindex[terms[k]];
             var tf = 1 /* Math.sqrt(tf) */;
-            var idf = Math.log(totalDocs / (bs.cardinality() + 1.0)) + 1.0;
-
-            // TODO field boosts
-            //        for(var ft in bs.fieldTypes) {
-            //        }
-            sum += tf * idf * idf /* term.queryTimeBoost */ * norm;
-            x += idf * idf /* term.queryTimeBoost */;
+            var idf = Math.log(totalDocs / (terms[k].frequency + 1.0)) + 1.0;
+            sum += tf * idf * idf * terms[k].boost * norm;
+            x += idf * idf * terms[k].boost;
         }
 
         var queryNorm = 1/Math.sqrt(x);
@@ -246,5 +246,64 @@ JSii.prototype.textTokenizer = function(text) {
             currStr += currChar;
         }
     }
+    return res;
+}
+
+/**
+ * Input field:"terms"^boost field2:"terms ..."^bost2
+ * 
+ * All attributes are optional: field:, quotation marks and ^boost
+ *
+ * @return array of {field: "name", terms: string, boost: number}
+ */
+JSii.prototype.queryParser = function(query) {
+    var res = new Array();   
+    var currChar;
+    var withinQuotation = false;
+    var currElement = {};
+    var currString = "";
+    var isBoostString = false;
+    for(var i=0; i < query.length; i++) {
+        currChar = query.charAt(i);
+        if(currChar == '"')
+            withinQuotation = !withinQuotation;                
+        
+        if(withinQuotation) {
+            if(currChar != '"')
+                currString += currChar;
+        } else {
+
+            if(i + 1 == query.length){
+                if(currChar != '"')
+                    currString += currChar;
+                currChar = ' ';
+            }
+
+            if(currChar == ' ') {
+                if(currString.length > 0) {
+                    if(isBoostString)
+                        currElement.boost = parseFloat(currString);
+                    else
+                        currElement.terms = currString;
+                }
+                isBoostString = false;
+                currString = "";
+                currElement.field = currElement.field || this.defaultSearchField;
+                currElement.boost = currElement.boost || 1;                
+                res.push(currElement);
+                currElement = {};
+            } else if(currChar == ':') {
+                currElement.field = currString;
+                currString = "";
+            } else if(currChar == '^') {
+                isBoostString = true;
+                currElement.terms = currString;
+                currString = "";
+            } else if(currChar != '"')
+                currString += currChar;
+        }
+            
+    }
+
     return res;
 }
