@@ -1,3 +1,5 @@
+// TODO use Buffer and base64
+
 /*
  * http://github.com/danwrong/restler/raw/master/lib/vendor/base64.js
  * 

@@ -49,16 +49,22 @@ var querySolr = function(webapp, login, pw) {
     
     var options = {};
     options.start = 0;
-    options.rows = 100;
+    options.rows = 1000;
+    var max = 1000 * 28;
+    
     // prefer english/german lang
-//    options.fq = "lang:de";
-    setInterval(function() {        
+    options.fq = "lang:en";
+    var intervalId = setInterval(function() {
         if(feedingInProcess)
             return;
         
         feedingInProcess = true;
         client.query(queryStr, options, feedDocsCallBack);
         options.start += options.rows;
+
+        // Stops a interval from triggering
+        if(options.start > max)
+            clearInterval(intervalId);
     }, 10000);
 }
 
@@ -94,23 +100,27 @@ fs.open("src/pw.txt", "r", 0666, function(err, fd){
 
 // accept clients
 http.createServer(function (request, response) {
-    if(request.url == undefined)
-        show404(request, response);
-    else {
-        var path = url.parse(request.url, true).pathname;
-        switch (path) {
-            case '/select/':
-            case '/select':
-                query(request, response);
-                break;          
-            default:
-                show404(request, response);
-                break;
+    try {
+        if(request.url == undefined)
+            show404(request, response);
+        else {
+            var path = url.parse(request.url, true).pathname;
+            switch (path) {
+                case '/select/':
+                case '/select':
+                    query(request, response);
+                    break;
+                default:
+                    show404(request, response);
+                    break;
+            }
         }
+    } catch(ex) {
+        console.log(new Date() + "| ERROR: " + ex);
     }
-}).listen(8124, "127.0.0.1");
+}).listen(8124, "0.0.0.0"); // 127.0.0.1 won't be available from outside
 
-console.log('Server running at http://127.0.0.1:8124/');
+console.log('Server running at http://0.0.0.0:8124/');
 
 var errorMessage = "Use select?q=query to query the in-memory index or use update/ to feed it!";
 
@@ -118,15 +128,15 @@ function query(request, response) {
     var params = url.parse(request.url, true).query;
     if(params == undefined) {
         response.writeHead(404, {
-            'Content-Type': 'text/plain'
+            'content-type': 'text/plain; charset=UTF-8'
         });
         response.write('{"responseHeader": {"status": 1, "QTime": 0, "error": "'+errorMessage+'"}, "response":{"numFound":0}}');
-    } else {        
-        params.q = params.q || "";        
+    } else {
+        params.q = params.q || "";
         params.start = params.start || 0;
         var start = new Date().getTime();
         var sortMethod = engine.createSortMethod(params.sort);
-        var result = engine.search(params.q, params.start, params.rows, sortMethod);        
+        var result = engine.search(params.q, params.start, params.rows, sortMethod);
         var time = new Date().getTime() - start;
         console.log(new Date() + "| new query:" + JSON.stringify(params));
         if(params.wt == "json") {
@@ -149,7 +159,7 @@ function query(request, response) {
 function show404(req, res) {
     res.writeHead(404, {
         'Content-Type': 'text/plain'
-    });    
+    });
     res.write('{"responseHeader": {"status": 1, "QTime": 0, "error": "'+errorMessage+'"}, "response":{"numFound":0}}');
     res.end();
 }
@@ -166,7 +176,9 @@ function writeXml(arg, result) {
     createInt("QTime", time);
 
     xml.startLst("params");
-    // TODO params
+    for(var prop in params) {
+        xml.createStr(prop, params[prop]);
+    }
     xml.end();
     xml.end();
 
@@ -177,8 +189,8 @@ function writeXml(arg, result) {
     }).writeDocs(result.docs).end();
     xml.end();
     response.writeHead(200, {
-        'Content-Type': 'text/xml'
-    });
+        'content-type': 'text/xml; charset=UTF-8'
+    });    
     response.write(xml.toXml());
 }
 
@@ -187,7 +199,7 @@ function writeJson(arg, result) {
     var response = arg.response;
     var params = arg.params;
     response.writeHead(200, {
-        'Content-Type': 'text/plain'
+        'content-type': 'text/plain; charset=UTF-8'
     });
     response.write('{"responseHeader": {"status":0, "QTime": '+time);
     response.write(',"params": ' + JSON.stringify(params));
