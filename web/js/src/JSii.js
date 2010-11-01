@@ -109,9 +109,9 @@ JSii.prototype.search = function(query, start, rows, sortFunction) {
         rows = 10;
 
     if(start < 0)
-        throw "Start should be >=0";
-    if(rows <= 0)
-        throw "Rows should be >0";
+        throw "Start should be >= 0";
+    if(rows < 0)
+        throw "Rows should be >= 0";
 
     var resDocs = [];
     if(query == "*" || this.trim(query).length == 0) {

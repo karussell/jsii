@@ -4,6 +4,11 @@ XmlHandler = function() {
     this.stack = [];
 }
 
+XmlHandler.prototype.header = function() {
+    this.str = '<?xml version="1.0" encoding="UTF-8"?>';
+    return this;
+}
+
 XmlHandler.prototype.create = function(el, attrs, text) {
     this.start(el, attrs).text(text).end();
     return this;
@@ -99,6 +104,18 @@ XmlHandler.prototype.createLong = function(name, value) {
     }, value);
 }
 
+XmlHandler.prototype.createFloat = function(name, value) {
+    return this.create('float', {
+        name : name
+    }, value);
+}
+
+XmlHandler.prototype.createDate = function(name, value) {
+    return this.create('date', {
+        name : name
+    }, value.toString());
+}
+
 XmlHandler.prototype.createStringArr = function(name, value) {
     var el = this.start('arr', {
         name : name
@@ -129,10 +146,16 @@ XmlHandler.prototype.writeDoc = function(doc) {
             this.createStr(prop, val);
         else if(typeof val === "boolean")
             this.createBool(prop, val);
-//        else if(typeof val === "long")
-//            this.createLong(prop, val);
-        else if(typeof val === "number")
-            this.createLong(prop, val);
+        //        else if(typeof val === "long")
+        //            this.createLong(prop, val);
+        else if(typeof val === "number"){
+            if(val%1==0)
+                this.createLong(prop, val);
+            else
+                this.createFloat(prop, val);
+        }
+        else if(val instanceof Date)
+            this.createDate(prop, val);
     }
     return this;
 }

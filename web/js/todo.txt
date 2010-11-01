@@ -1,7 +1,13 @@
+jetwick:
+  de.jetwick.solr.SolrTweetSearch.readDoc(SolrTweetSearch.java:196)
+        java.lang.String cannot be cast to java.util.Date
+  => convert <date>...</date> to Date instance
+
 Sun Oct 31 2010 22:22:04 GMT+0100 (CET)| {"start":"30000","q":"","wt":"json","rows":"1000"} returned 1000 documents. feeding time:0.157 total:4718030 RAM:351.11147689819336 MB
 Sun Oct 31 2010 22:23:02 GMT+0100 (CET)| {"start":"31000","q":"","wt":"json","rows":"1000"} returned 1000 documents. feeding time:1.751 total:4718030 RAM:372.17225646972656 MB
 FATAL ERROR: CALL_AND_RETRY_2 Allocation failed - process out of memory
-    => 10 MB for 1000 docs !?
+    => 10 KB for 1 doc !?
+    call gc explicitely! increase available RAM!?
 
 when feeding docs do not add but overwrite existing! use idField
 

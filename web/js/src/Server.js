@@ -116,7 +116,7 @@ function query(request, response) {
         var sortMethod = engine.createSortMethod(params.sort);
         var result = engine.search(params.q, params.start, params.rows, sortMethod);        
         var time = new Date().getTime() - start;
-
+        console.log(new Date() + "| new query:" + JSON.stringify(params));
         if(params.wt == "json") {
             writeJson({
                 response: response,
@@ -148,7 +148,7 @@ function writeXml(arg, result) {
     var params = arg.params;
     var xml = new XmlHandler();
     xml.prettyPrint = true;
-    xml.start('response');
+    xml.header().start('response');
     xml.startLst("responseHeader").
     createInt("status", 0).
     createInt("QTime", time);
@@ -162,7 +162,7 @@ function writeXml(arg, result) {
         name:"response",
         numFound: result.total,
         start: params.start
-        }).writeDocs(result.docs).end();
+    }).writeDocs(result.docs).end();
     xml.end();
     response.writeHead(200, {
         'Content-Type': 'text/xml'
