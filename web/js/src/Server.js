@@ -51,7 +51,7 @@ var querySolr = function(webapp, login, pw) {
     
     var options = {};
     options.start = 0;
-    options.rows = 10;
+    options.rows = 1000;
     var max = 1000 * 20;
     
     // prefer english/german lang
