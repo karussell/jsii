@@ -4,8 +4,11 @@ XmlHandler = function() {
     this.stack = [];
 }
 
+if (typeof module !== "undefined") module.exports = XmlHandler
+
 XmlHandler.prototype.header = function() {
-    this.str = '<?xml version="1.0" encoding="UTF-8"?>';
+    this.str = '<?xml version="1.0" encoding="utf8"?>';
+//    this.str = '';
     return this;
 }
 
@@ -28,7 +31,7 @@ XmlHandler.prototype.start = function(el, attrs) {
 }
 
 XmlHandler.prototype.text = function(str) {
-    if(typeof str === "string")
+    if(typeof str === "string") {
         for(var i = 0; i < str.length; i++) {
             var tmp = str.charAt(i);
             switch(tmp) {
@@ -50,8 +53,8 @@ XmlHandler.prototype.text = function(str) {
                 default:
                     this.str += tmp;
             }
-        }
-    else
+        }        
+    } else
         this.str += '' + str;
     return this;
 }

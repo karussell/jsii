@@ -10,7 +10,7 @@ var http = require("http");
 var querystring = require("querystring");
 var base64 = require('./base64');
 
-SolrClient = function (host, port, webapp, login, pw) {
+SolrClient = function(host, port, webapp, login, pw) {
     this.host = host || "127.0.0.1";
     this.port = port || "8983";
     this.fullHost = this.host + ":" + this.port;
@@ -20,6 +20,8 @@ SolrClient = function (host, port, webapp, login, pw) {
     this.login = login;
     this.pw = pw;
 };
+
+if (typeof module !== "undefined") module.exports = SolrClient
 
 SolrClient.prototype.query = function (query, options, callback) {
     var queryParams = options || {};

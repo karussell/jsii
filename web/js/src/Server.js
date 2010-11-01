@@ -4,18 +4,23 @@
  * Using node.js v0.2.4
  */
 
-// require statements are not hotupdateable!?
+
+require('./json2');
+
+// require statements are not hotupdateable
+// process is a global variable
+
 var http = require('http');
 //var querystring = require('querystring');
 var url = require('url');
 var fs = require('fs');
 var util = require('util');
-// process is a global variable
-require('./JSii');
-require('./BitSet');
-require('./json2');
-require("./Solr");
-require("./XmlHandler");
+
+// require is necessary for JSii
+var BitSet = require('./BitSet');
+var JSii = require('./JSii');
+var SolrClient = require("./SolrClient");
+var XmlHandler = require("./XmlHandler");
 
 // feed docs from solr into our index
 var engine = new JSii();
@@ -27,7 +32,7 @@ var querySolr = function(webapp, login, pw) {
     var queryStr = "";
     var feedingInProcess = false;
 
-    var feedDocsCallBack = function (err, response) {
+    var feedDocsCallBack = function (err, response) {        
         var responseObj = JSON.parse(response);
         if(responseObj == null) {
             console.log("Something goes wrong. response was null");
@@ -44,8 +49,9 @@ var querySolr = function(webapp, login, pw) {
     
     var options = {};
     options.start = 0;
-    options.rows = 1000;
-    //options.fq = "lang:en";
+    options.rows = 100;
+    // prefer english/german lang
+//    options.fq = "lang:de";
     setInterval(function() {        
         if(feedingInProcess)
             return;
@@ -53,7 +59,7 @@ var querySolr = function(webapp, login, pw) {
         feedingInProcess = true;
         client.query(queryStr, options, feedDocsCallBack);
         options.start += options.rows;
-    }, 60 * 1000);
+    }, 10000);
 }
 
 fs.open("src/pw.txt", "r", 0666, function(err, fd){
@@ -74,10 +80,16 @@ fs.open("src/pw.txt", "r", 0666, function(err, fd){
 // static mini example feeding
 //engine.feedDocs([{
 //    id:1,
-//    text : "blasenfrei blup"
+//    tw : "unschlüssig blup",
+//    user: "peter",
+//    repl_i : 0,
+//    retw_i : 0
 //}, {
 //    id:2,
-//    text : "blap blup"
+//    tw : "blap blup",
+//    user: "test",
+//    repl_i : 0,
+//    retw_i : 0
 //}]);
 
 // accept clients

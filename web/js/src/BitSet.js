@@ -14,9 +14,12 @@
  * a common operation is 'x >>> 5' which converts the bitSetIndex into
  * the index necessary to retrieve one of the 32 bit chunk.
  */
-BitSet = function () {
+
+BitSet = function() {
     this.arr = [];
 }
+
+if (typeof module !== "undefined") module.exports = BitSet
 
 BitSet.prototype.and = function(set) {
     // a & a is just a    

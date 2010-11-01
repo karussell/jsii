@@ -1,3 +1,5 @@
+support fq param
+
 jetwick:
   de.jetwick.solr.SolrTweetSearch.readDoc(SolrTweetSearch.java:196)
         java.lang.String cannot be cast to java.util.Date
@@ -9,25 +11,25 @@ FATAL ERROR: CALL_AND_RETRY_2 Allocation failed - process out of memory
     => 10 KB for 1 doc !?
     call gc explicitely! increase available RAM!?
 
-when feeding docs do not add but overwrite existing! use idField
-
-parse date when feeding!
-    /SECOND /MINUTE !?
-
-sort against id (date)
-
+parse date when feeding! /SECOND /MINUTE !?
 measure RAM usage + qtime when load testing
 regular refresh via F5 -> only first result differs
 range query date:[NOW-8HOUR TO *]
     create a filter cache. keys als "date:[mySpecialFilter]" values ala DocBitSet (docs that fullfill the query)
 search in AND-results via doc.field.indexOf("x y z") when querying "x y z" (query with "" !)
-npm install jsii
+
 js twitter clients
     http://github.com/masylum/twitter-js
     http://github.com/jdub/node-twitter
 
-support sort=field asc/desc   (int, date->long)
+major TODOs
+* when feeding: overwrite existing! use idField
+* feeding via HTTP
+* range queries
+* better scoring (with tf = min(4,tf))
+* is there really no common way to improve the speed of iterating over an hash ala Java:
+  for(var key, value in hash.entries) {  }
+* npm install jsii
 
-TODO
-    jetwick integration is difficult because
-    solrj does not have a JSONResponseParser yet: https://issues.apache.org/jira/browse/SOLR-402
+SolrJ
+* solrj does not have a JSONResponseParser yet: https://issues.apache.org/jira/browse/SOLR-402

@@ -7,7 +7,7 @@
  *
  * fast (?), in-memory, simple
  */
-JSii = function () {
+JSii = function() {
     // inverted index ala {fieldX: {"test": bitSet1}, {"pest": bitSet2},
     //                     fieldY: {"test": bitSet3}, ...
     this.iindex = {};
@@ -22,7 +22,8 @@ JSii = function () {
         id : 'string',
         text : 'text',
         tw : 'text',
-        user : 'string'
+        user : 'string',
+        lang : 'string'
     };
     this.defaultSearchField = 'text';
 
@@ -35,6 +36,9 @@ JSii = function () {
         this.splitOnChar[result.charAt(ii)] = true;
     }
 }
+
+if (typeof module !== "undefined") module.exports = JSii
+
 
 JSii.prototype.trim = function (str) {
     return str.replace(/^\s*/, "").replace(/\s*$/, "");

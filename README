@@ -20,3 +20,17 @@ At the moment feeding is possible only via API (engine.feedDocs) see Server.js
 start server via 'node Server.js'
 
 query via http://127.0.0.1:8124/select?q=blup
+
+
+Features
+========
+
+* 100% JavaScript
+* 100% in-memory
+* 100% open source, Apache 2 License
+* Queryable via HTTP
+* Solr compatible JSON
+* Boostable query
+* pagable, filterable and sortable results
+* Real time BUT: jsii is not transaction safe, because there is no 'commit'
+* Unit tests
