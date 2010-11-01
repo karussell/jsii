@@ -184,12 +184,11 @@ JSii.prototype.search = function(query, start, rows, sortFunction) {
 /**
  * Sets the score of every doc specified in resDocs.
  *
- * In its end version this should works like:
+ * In its end version this should work like:
  * http://lucene.apache.org/java/3_0_2/api/all/org/apache/lucene/search/Similarity.html
  *
  * Neglected some parts because for searching tweets I don't need it:
- *   lengthNorm is 1
- *   term frequency is 1
+ *   lengthNorm is 1 
  *   coord(q,d) = number of terms of q that are in d = 1 at the moment
  *   field boost must be handled via query boost
  */
@@ -202,11 +201,12 @@ JSii.prototype.setScore = function(resDocs, terms) {
         
         // TODO only terms that are in the doc! at the moment this is ok because we are using AND operator
         for(var k = 0, l = terms.length; k < l; k++) {
+            var fieldValue = doc[terms[k].field];
             var norm = 1 /* lengthNorm(field(t)) * multiplyForAllFields(boost(field(t))) <- precalculated */;
-
-            // for tweets it is good when use: tf = Math.min(4, tf)
-            //alert(terms[k].field + ":"+terms[k].term+" in " +doc[terms[k].field]);
-            var tf = Math.sqrt(this.count(doc[terms[k].field], terms[k].term, 4));
+            // lengthNorm == 1/sqrt(numTermsOfFieldValue)
+            
+            // for tweets it is good when use: tf = Math.min(4, tf)            
+            var tf = Math.sqrt(this.count(fieldValue, terms[k].term, 3));
             var idf = Math.log(totalDocs / (terms[k].docFrequency + 1.0)) + 1.0;
             sum += tf * idf * idf * terms[k].boost * norm;
             x += idf * idf * terms[k].boost;
@@ -217,15 +217,18 @@ JSii.prototype.setScore = function(resDocs, terms) {
     }
 }
 
-JSii.prototype.count = function(text, str, max) {
+JSii.prototype.count = function(text, term, max) {
     if(text == undefined)
         throw "field not defined. this indicates a bug";
-    else if(typeof text !== 'string')
+    else if(typeof text === 'string'){
+        text = text.toLowerCase();
+    } else
         text = '' + text;
 
+    term = term.toLowerCase();
     var index = -1;
     var counter = 0;
-    while( (index = text.indexOf(str, index + 1)) >= 0) {
+    while( (index = text.indexOf(term, index + 1)) >= 0) {
         counter++;
         if(counter >= max)
             break;

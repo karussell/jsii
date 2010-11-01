@@ -118,7 +118,7 @@ describe("JSii", function() {
         var jsii = new JSii();
         jsii.feedDocs([{
             id : 1,
-            text : "test blap blap"
+            text : "test blap Blap"
         },{
             id : 2,
             text : "test blap blup"

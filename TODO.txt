@@ -1,5 +1,3 @@
-score is always the same!?
-
 major TODOs
  * when feeding: overwrite existing! use idField
  * feeding via HTTP
