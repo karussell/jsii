@@ -150,9 +150,10 @@ JSii.prototype.search = function(query, start, rows, sortFunction) {
                     resBs.and(bs);
 
                 allTerms.push({
-                    frequency: bs.cardinality(),
+                    docFrequency: bs.cardinality(),
                     boost: elements[i].boost,
-                    term: terms[i]
+                    term: terms[i],
+                    field: elements[ii].field
                 });
             }
     
@@ -192,31 +193,51 @@ JSii.prototype.search = function(query, start, rows, sortFunction) {
  *   coord(q,d) = number of terms of q that are in d = 1 at the moment
  *   field boost must be handled via query boost
  */
-JSii.prototype.setScore = function(resDocs, terms) {
-    var bs;
+JSii.prototype.setScore = function(resDocs, terms) {    
     var totalDocs = resDocs.length;
-    for(var doc in resDocs) {
+    for(var index = 0; index < totalDocs; index++) {
         var x = 0;
-        var sum = 0;
-        var norm = 1 /* lengthNorm(field(t)) * multiplyForAllFields(boost(field(t))) <- precalculated */;
+        var sum = 0;        
+        var doc = resDocs[index];
+        
+        // TODO only terms that are in the doc! at the moment this is ok because we are using AND operator
         for(var k = 0, l = terms.length; k < l; k++) {
-            // for tweets we should use var tf = Math.min(4, tf) but tf is expensive to calc so avoid it at all:
-            var tf = 1 /* Math.sqrt(tf) */;
-            var idf = Math.log(totalDocs / (terms[k].frequency + 1.0)) + 1.0;
+            var norm = 1 /* lengthNorm(field(t)) * multiplyForAllFields(boost(field(t))) <- precalculated */;
+
+            // for tweets it is good when use: tf = Math.min(4, tf)
+            //alert(terms[k].field + ":"+terms[k].term+" in " +doc[terms[k].field]);
+            var tf = Math.sqrt(this.count(doc[terms[k].field], terms[k].term, 4));
+            var idf = Math.log(totalDocs / (terms[k].docFrequency + 1.0)) + 1.0;
             sum += tf * idf * idf * terms[k].boost * norm;
             x += idf * idf * terms[k].boost;
         }
 
         var queryNorm = 1/Math.sqrt(x);
-        resDocs[doc].score = queryNorm * sum;
+        doc.score = queryNorm * sum;
     }
+}
+
+JSii.prototype.count = function(text, str, max) {
+    if(text == undefined)
+        throw "field not defined. this indicates a bug";
+    else if(typeof text !== 'string')
+        text = '' + text;
+
+    var index = -1;
+    var counter = 0;
+    while( (index = text.indexOf(str, index + 1)) >= 0) {
+        counter++;
+        if(counter >= max)
+            break;
+    }
+    return counter;
 }
 
 JSii.prototype.sort = function(doc1, doc2) {
     if(doc1.score > doc2.score)
-        return 1;
-    else if(doc1.score < doc2.score)
         return -1;
+    else if(doc1.score < doc2.score)
+        return 1;
     return 0;
 };
 

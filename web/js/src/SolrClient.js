@@ -63,7 +63,8 @@ SolrClient.prototype.getError = function (errorMessage) {
 //    return errorMessage.match(/<pre>(.+)<\/pre>/)[1];
 };
 
-SolrClient.prototype.sendRequest = function(options, callback) {    
+SolrClient.prototype.sendRequest = function(options, callback) {
+    //console.log(options);
     var self = this;
     var request = this.httpClient.request(options.method.toUpperCase(),
         options.path, options.headers);

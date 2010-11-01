@@ -118,7 +118,7 @@ describe("JSii", function() {
         var jsii = new JSii();
         jsii.feedDocs([{
             id : 1,
-            text : "test blap"
+            text : "test blap blap"
         },{
             id : 2,
             text : "test blap blup"
@@ -126,8 +126,11 @@ describe("JSii", function() {
 
         var res = jsii.search("test blap");
         expect(res.total).toBe(2);
-        var score1 = res.docs[0].score;        
+        expect(res.docs[0].id).toBe(1);
+        var score1 = res.docs[0].score;
+        var score2 = res.docs[1].score;
         expect(score1).toBeGreaterThan(0.5);
+        expect(score1).toBeGreaterThan(score2);
 
         res = jsii.search("blup test");
         expect(res.total).toBe(1);       

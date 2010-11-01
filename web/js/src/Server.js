@@ -32,7 +32,9 @@ var querySolr = function(webapp, login, pw) {
     var queryStr = "";
     var feedingInProcess = false;
 
-    var feedDocsCallBack = function (err, response) {        
+    var feedDocsCallBack = function (err, response) {
+        if(err) throw "Error occured when receiving response:" + err;
+     
         var responseObj = JSON.parse(response);
         if(responseObj == null) {
             console.log("Something goes wrong. response was null");
@@ -49,8 +51,8 @@ var querySolr = function(webapp, login, pw) {
     
     var options = {};
     options.start = 0;
-    options.rows = 1000;
-    var max = 1000 * 28;
+    options.rows = 10;
+    var max = 1000 * 20;
     
     // prefer english/german lang
     options.fq = "lang:en";
@@ -68,6 +70,7 @@ var querySolr = function(webapp, login, pw) {
     }, 10000);
 }
 
+// TODO at the moment it is necessary to avoid a new line
 fs.open("src/pw.txt", "r", 0666, function(err, fd){
     if (err) throw err;
     fs.read(fd, 10000, null, 'utf8', function(err,str,count) {
