@@ -237,6 +237,12 @@ JSii.prototype.count = function(text, term, max) {
 };
 
 JSii.prototype.sort = function(doc1, doc2) {
+    if( doc1.score === undefined )
+        doc1.score = 0;
+
+    if( doc2.score === undefined )
+        doc2.score = 0;
+
     if(doc1.score > doc2.score)
         return -1;
     else if(doc1.score < doc2.score)
