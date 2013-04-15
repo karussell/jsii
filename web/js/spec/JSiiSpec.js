@@ -3,9 +3,9 @@
  */
 
 describe("JSii", function() {
-    
-    it("should do simple search", function() {        
-        var jsii = new JSii();        
+
+    it("should do simple search", function() {
+        var jsii = new JSii();
         jsii.feedDocs([{
             id : 1,
             text : "blup"
@@ -32,7 +32,7 @@ describe("JSii", function() {
 
         // you cannot get documents with id=1 AND 2
         resp = jsii.search('1 2');
-        expect(resp.total).toBe(0);        
+        expect(resp.total).toBe(0);
     });
 
     it("should do pagination", function() {
@@ -50,7 +50,7 @@ describe("JSii", function() {
             id : 4,
             text : "blup blap five"
         }]);
-        
+
         var resp = jsii.search('blup', 0, 2);
         expect(resp.total).toBe(4);
         expect(resp.docs.length).toBe(2);
@@ -61,6 +61,51 @@ describe("JSii", function() {
         expect(resp.total).toBe(4);
         expect(resp.docs.length).toBe(2);
         expect(resp.docs[0].id).toBe(2);
+    });
+
+    it("empty searches on indexes larger the 10 should work in chrome", function() {
+        var jsii = new JSii();
+        jsii.feedDocs([{
+                "id": 1,
+                "text": "s"
+            }, {
+                "id": 2,
+                "text": "x"
+            }, {
+                "id": 3,
+                "text": "x"
+            }, {
+                "id": 4,
+                "text": "x"
+            }, {
+                "id": 5,
+                "text": "x"
+            }, {
+                "id": 6,
+                "text": "x"
+            }, {
+                "id": 7,
+                "text": "x"
+            }, {
+                "id": 8,
+                "text": "x"
+            }, {
+                "id": 9,
+                "text": "x"
+            }, {
+                "id": 10,
+                "text": "x"
+            }, { //remove this object and the index works as expected
+                "id": 11,
+                "text": "x"
+            }
+        ]);
+        var res = jsii.search("s");
+        expect(res.docs[0].id).toBe(1); //passes
+
+        jsii.search("");
+        res = jsii.search("s");
+        expect(res.docs[0].id).toBe(1); //fails finds 6
     });
 
     describe("text tokenizer", function() {
@@ -133,7 +178,7 @@ describe("JSii", function() {
         expect(score1).toBeGreaterThan(score2);
 
         res = jsii.search("blup test");
-        expect(res.total).toBe(1);       
+        expect(res.total).toBe(1);
         expect(score1).toBeGreaterThan(res.docs[0].score);
     });
 
@@ -171,7 +216,7 @@ describe("JSii", function() {
 
     it("should do query parsing", function() {
         var jsii = new JSii();
-        jsii.defaultSearchField = "tw"
+        jsii.defaultSearchField = "tw";
         var res = jsii.queryParser("hello");
         expect(res[0].field).toBe('tw');
         expect(res[0].terms).toBe('hello');
@@ -184,7 +229,7 @@ describe("JSii", function() {
 
         res = jsii.queryParser('tmp:"test it"');
         expect(res.length).toBe(1);
-        expect(res[0].field).toBe('tmp');        
+        expect(res[0].field).toBe('tmp');
         expect(res[0].terms).toBe('test it');
         expect(res[0].boost).toBe(1);
 
@@ -200,13 +245,13 @@ describe("JSii", function() {
     });
 
     it("should do simple query with no docs feeded", function() {
-        var jsii = new JSii();        
+        var jsii = new JSii();
         jsii.search("hello");
     });
 
     it("should create correct sort method", function() {
-        var jsii = new JSii();        
-        
+        var jsii = new JSii();
+
         var array = [{
             id: 1
         }, {

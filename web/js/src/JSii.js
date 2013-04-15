@@ -29,26 +29,26 @@ JSii = function() {
 
     // TODO when feeding docs do not add but overwrite existing!
     this.idField = 'id';
-    
+
     var result = " &-+\\/,;:.!?_~#'=(){}[]<>|%$§\"@";
     this.splitOnChar = {};
     for(var ii = 0; ii < result.length; ii++) {
         this.splitOnChar[result.charAt(ii)] = true;
     }
-}
+};
 
-if (typeof module !== "undefined") module.exports = JSii
+if (typeof module !== "undefined") module.exports = JSii;
 
 
 JSii.prototype.trim = function (str) {
     return str.replace(/^\s*/, "").replace(/\s*$/, "");
-}
+};
 
 /**
  * In newdocs the documents to be fed are specified. An array of simple property objects:
  * [{id : 1, field1 : "Test this"}, {id : 2, field1 : "Test now!"}]
  */
-JSii.prototype.feedDocs = function(newdocs) {    
+JSii.prototype.feedDocs = function(newdocs) {
     for(var i=0; i < newdocs.length; i++) {
         this.docs.push(newdocs[i]);
         var docNo = this.docs.length - 1;
@@ -66,26 +66,26 @@ JSii.prototype.feedDocs = function(newdocs) {
                 continue;
 
             var fieldSpecificIndex = this.iindex[prop];
-            if(fieldSpecificIndex == undefined) {
+            if(fieldSpecificIndex === undefined) {
                 fieldSpecificIndex = {};
                 this.iindex[prop] = fieldSpecificIndex;
             }
 
             for(var jj = 0; jj < terms.length; jj++) {
                 var bitSet = fieldSpecificIndex[terms[jj]];
-            
+
                 if(bitSet === undefined) {
                     bitSet = new BitSet();
                     fieldSpecificIndex[terms[jj]] = bitSet;
                 }
-                
+
                 bitSet.set(docNo);
             }
         }
     }
-}
+};
 // From http://www.mail-archive.com/lucene-user@jakarta.apache.org/msg11118.html
-// 
+//
 // More recent theoretical justifications of tf*idf provide intuitive explanations of why idf should only be included linearly.
 // It's easy to correct for idf^2 by using a customer Similarity that takes a final square root.
 //
@@ -104,12 +104,12 @@ JSii.prototype.feedDocs = function(newdocs) {
  * }
  */
 JSii.prototype.search = function(query, start, rows, sortFunction) {
-    if(sortFunction == undefined)
+    if(sortFunction === undefined)
         sortFunction = this.sort;
-    
+
     if(start === undefined)
         start = 0;
-    if(rows == undefined)
+    if(rows === undefined)
         rows = 10;
 
     if(start < 0)
@@ -118,9 +118,9 @@ JSii.prototype.search = function(query, start, rows, sortFunction) {
         throw "Rows should be >= 0";
 
     var resDocs = [];
-    if(query == "*" || this.trim(query).length == 0) {
+    if(query == "*" || this.trim(query).length === 0) {
         resDocs = this.docs;
-    } else {    
+    } else {
         // extract elements from query ala field:"terma termb"^boost ...
         var elements = this.queryParser(query);
         var resBs;
@@ -130,12 +130,12 @@ JSii.prototype.search = function(query, start, rows, sortFunction) {
             var fieldSpecificIndex = this.iindex[elements[ii].field];
             if(fieldSpecificIndex === undefined)
                 return this.createEmptyResult();
-            
+
             // create bitset of terms and perform 'AND'
             var terms = this.textTokenizer(elements[ii].terms);
-            if(terms.length == 0)
-                return this.createEmptyResult();                       
-            
+            if(terms.length === 0)
+                return this.createEmptyResult();
+
             for(var i = 0, j = terms.length; i < j; i++) {
                 var bs = fieldSpecificIndex[terms[i]];
 
@@ -143,7 +143,7 @@ JSii.prototype.search = function(query, start, rows, sortFunction) {
                 if(bs === undefined)
                     return this.createEmptyResult();
 
-                if(resBs == undefined)
+                if(resBs === undefined)
                     resBs = bs;
                 else
                     // AND operator
@@ -156,11 +156,11 @@ JSii.prototype.search = function(query, start, rows, sortFunction) {
                     field: elements[ii].field
                 });
             }
-    
-            if(resBs.length() == 0)
-                return this.createEmptyResult();               
+
+            if(resBs.length() === 0)
+                return this.createEmptyResult();
         }
-        
+
         // collect the docs from the resulting bitset
         for(var bsIndex = resBs.nextSetBit(0);
             bsIndex < resBs.length() && bsIndex != -1;
@@ -175,11 +175,11 @@ JSii.prototype.search = function(query, start, rows, sortFunction) {
     var totalDocs = resDocs.length;
     // for pagination
     var end = Math.min(start + rows, totalDocs);
-    return { 
-        total : totalDocs,        
+    return {
+        total : totalDocs,
         docs: resDocs.slice(start, end)
     };
-}
+};
 
 /**
  * Sets the score of every doc specified in resDocs.
@@ -188,24 +188,24 @@ JSii.prototype.search = function(query, start, rows, sortFunction) {
  * http://lucene.apache.org/java/3_0_2/api/all/org/apache/lucene/search/Similarity.html
  *
  * Neglected some parts because for searching tweets I don't need it:
- *   lengthNorm is 1 
+ *   lengthNorm is 1
  *   coord(q,d) = number of terms of q that are in d = 1 at the moment
  *   field boost must be handled via query boost
  */
-JSii.prototype.setScore = function(resDocs, terms) {    
+JSii.prototype.setScore = function(resDocs, terms) {
     var totalDocs = resDocs.length;
     for(var index = 0; index < totalDocs; index++) {
         var x = 0;
-        var sum = 0;        
+        var sum = 0;
         var doc = resDocs[index];
-        
+
         // TODO only terms that are in the doc! at the moment this is ok because we are using AND operator
         for(var k = 0, l = terms.length; k < l; k++) {
             var fieldValue = doc[terms[k].field];
             var norm = 1 /* lengthNorm(field(t)) * multiplyForAllFields(boost(field(t))) <- precalculated */;
             // lengthNorm == 1/sqrt(numTermsOfFieldValue)
-            
-            // for tweets it is good when use: tf = Math.min(4, tf)            
+
+            // for tweets it is good when use: tf = Math.min(4, tf)
             var tf = Math.sqrt(this.count(fieldValue, terms[k].term, 3));
             var idf = Math.log(totalDocs / (terms[k].docFrequency + 1.0)) + 1.0;
             sum += tf * idf * idf * terms[k].boost * norm;
@@ -215,10 +215,10 @@ JSii.prototype.setScore = function(resDocs, terms) {
         var queryNorm = 1/Math.sqrt(x);
         doc.score = queryNorm * sum;
     }
-}
+};
 
 JSii.prototype.count = function(text, term, max) {
-    if(text == undefined)
+    if(text === undefined)
         throw "field not defined. this indicates a bug";
     else if(typeof text === 'string'){
         text = text.toLowerCase();
@@ -234,18 +234,22 @@ JSii.prototype.count = function(text, term, max) {
             break;
     }
     return counter;
-}
+};
 
 JSii.prototype.sort = function(doc1, doc2) {
-    if(doc1.score > doc2.score)
-        return -1;
-    else if(doc1.score < doc2.score)
-        return 1;
+    var score1 = doc1.score,
+        score2 = doc2.score;
+
+    if( score1 === undefined ) score1 = 0;
+    if( score2 === undefined ) score2 = 0;
+
+    if(score1 > score2) return -1;
+    if(score1 < score2) return 1;
     return 0;
 };
 
 JSii.prototype.createSortMethod = function(sortString) {
-    if(sortString == undefined)
+    if(sortString === undefined)
         return this.sort;
 
     var field = sortString.split(' ')[0];
@@ -272,27 +276,27 @@ JSii.prototype.createSortMethod = function(sortString) {
             return 0;
         };
     }
-}
+};
 
 JSii.prototype.createEmptyResult = function() {
     return  {
         total : 0,
         docs: []
     };
-}
+};
 
 JSii.prototype.stringFilter = function(str) {
     if(str instanceof String)
         return str.toLowerCase();
 
-    return str + '';    
-}
+    return str + '';
+};
 
 // whitespace tokenizer
 JSii.prototype.textTokenizer = function(text) {
     var res = [];
-    // TODO PERFORMANCE: use an associative array instead!?    
-    var currStr = "";    
+    // TODO PERFORMANCE: use an associative array instead!?
+    var currStr = "";
     var currChar;
 
     // go through the text to split (/create terms) on some characters
@@ -307,26 +311,26 @@ JSii.prototype.textTokenizer = function(text) {
                 currStr = "";
             }
             continue;
-        } else if(i + 1 == text.length) {            
+        } else if(i + 1 == text.length) {
             currStr += currChar;
             res.push(currStr);
             currStr = "";
-        } else {           
+        } else {
             currStr += currChar;
         }
     }
     return res;
-}
+};
 
 /**
  * Input field:"terms"^boost field2:"terms ..."^bost2
- * 
+ *
  * All attributes are optional: field:, quotation marks and ^boost
  *
  * @return array of {field: "name", terms: string, boost: number}
  */
 JSii.prototype.queryParser = function(query) {
-    var res = new Array();   
+    var res = [];
     var currChar;
     var withinQuotation = false;
     var currElement = {};
@@ -335,8 +339,8 @@ JSii.prototype.queryParser = function(query) {
     for(var i=0; i < query.length; i++) {
         currChar = query.charAt(i);
         if(currChar == '"')
-            withinQuotation = !withinQuotation;                
-        
+            withinQuotation = !withinQuotation;
+
         if(withinQuotation) {
             if(currChar != '"')
                 currString += currChar;
@@ -358,7 +362,7 @@ JSii.prototype.queryParser = function(query) {
                 isBoostString = false;
                 currString = "";
                 currElement.field = currElement.field || this.defaultSearchField;
-                currElement.boost = currElement.boost || 1;                
+                currElement.boost = currElement.boost || 1;
                 res.push(currElement);
                 currElement = {};
             } else if(currChar == ':') {
@@ -371,8 +375,8 @@ JSii.prototype.queryParser = function(query) {
             } else if(currChar != '"')
                 currString += currChar;
         }
-            
+
     }
 
     return res;
-}
+};
